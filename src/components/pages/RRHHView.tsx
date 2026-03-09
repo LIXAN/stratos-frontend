@@ -3,6 +3,7 @@ import { Typography } from '../atoms/Typography';
 import { Button } from '../atoms/Button';
 import { Header } from '../organisms/Header';
 import { EmpleadoModal } from '../organisms/EmpleadoModal';
+import { CargoModal } from '../organisms/CargoModal';
 import { rrhhService } from '../../services/api';
 import ConfirmModal from '../atoms/ConfirmModal';
 
@@ -11,6 +12,7 @@ export const RRHHView = () => {
     const [loading, setLoading] = useState(true);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isCargoModalOpen, setIsCargoModalOpen] = useState(false);
     const [editingEmpleado, setEditingEmpleado] = useState<any>(null);
     const [saving, setSaving] = useState(false);
 
@@ -92,13 +94,18 @@ export const RRHHView = () => {
 
             <div className="p-8 pb-32 flex-1 overflow-y-auto">
                 <div className="mb-6 flex justify-between items-center">
-                    <input
-                        type="text"
-                        placeholder="Buscar por nombre o cargo..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-1/3 bg-dark-900 border border-white/10 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-saas-500 outline-none theme-light:bg-white theme-light:border-slate-300 theme-light:text-slate-900"
-                    />
+                    <div className="flex gap-4 w-1/2">
+                        <input
+                            type="text"
+                            placeholder="Buscar por nombre o cargo..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-dark-900 border border-white/10 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-saas-500 outline-none theme-light:bg-white theme-light:border-slate-300 theme-light:text-slate-900"
+                        />
+                        <Button variant="primary" onClick={() => setIsCargoModalOpen(true)}>
+                            Gestionar Cargos
+                        </Button>
+                    </div>
                     <div className="text-sm text-gray-400 theme-light:text-slate-500">
                         Total Registrados: <span className="text-white theme-light:text-slate-900 font-bold">{empleados.length}</span>
                     </div>
@@ -130,6 +137,7 @@ export const RRHHView = () => {
                                         <th className="p-4 text-sm font-semibold text-gray-300 theme-light:text-slate-600">Nombre</th>
                                         <th className="p-4 text-sm font-semibold text-gray-300 theme-light:text-slate-600">Cargo</th>
                                         <th className="p-4 text-sm font-semibold text-gray-300 theme-light:text-slate-600">Documento / Teléfono</th>
+                                        <th className="p-4 text-sm font-semibold text-gray-300 theme-light:text-slate-600">Mod. / Rol</th>
                                         <th className="p-4 text-sm font-semibold text-gray-300 theme-light:text-slate-600">Estado</th>
                                         <th className="p-4 text-sm font-semibold text-gray-300 theme-light:text-slate-600 text-right">Acciones</th>
                                     </tr>
@@ -141,7 +149,7 @@ export const RRHHView = () => {
                                                 <div className="font-bold text-white theme-light:text-slate-800">{emp.nombre_completo}</div>
                                             </td>
                                             <td className="p-4">
-                                                <div className="text-sm text-gray-300 theme-light:text-slate-600">{emp.cargo}</div>
+                                                <div className="text-sm text-gray-300 theme-light:text-slate-600">{emp.cargo ? emp.cargo.nombre : 'Sin asignar'}</div>
                                             </td>
                                             <td className="p-4">
                                                 <div className="text-sm text-gray-400 theme-light:text-slate-500">
@@ -157,12 +165,27 @@ export const RRHHView = () => {
                                                 </div>
                                             </td>
                                             <td className="p-4">
+                                                <div className="text-sm">
+                                                    <div className="text-white theme-light:text-slate-800 capitalize">{emp.modalidad || 'N/A'}</div>
+                                                    <div className="text-gray-400 theme-light:text-slate-500 text-xs uppercase tracking-wide mt-1">{emp.rol || 'N/A'}</div>
+                                                </div>
+                                            </td>
+                                            <td className="p-4">
                                                 <span className={`px-2 py-1 text-xs rounded-full ${emp.estado === 'activo' ? 'bg-saas-500/20 text-saas-400 theme-light:bg-saas-100 theme-light:text-saas-700' : 'bg-red-500/20 text-red-400 theme-light:bg-red-100 theme-light:text-red-600'}`}>
                                                     {emp.estado.charAt(0).toUpperCase() + emp.estado.slice(1)}
                                                 </span>
                                             </td>
                                             <td className="p-4 text-right">
                                                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); alert("Gestión de accesos en desarrollo"); }}
+                                                        className="text-gray-400 hover:text-blue-400 p-2 transition-colors theme-light:text-slate-400 theme-light:hover:text-blue-500"
+                                                        title="Gestionar Accesos"
+                                                    >
+                                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                                        </svg>
+                                                    </button>
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); setEditingEmpleado(emp); setIsModalOpen(true); }}
                                                         className="text-gray-400 hover:text-saas-400 p-2 transition-colors theme-light:text-slate-400 theme-light:hover:text-saas-600"
@@ -207,6 +230,11 @@ export const RRHHView = () => {
                 title="Eliminar Empleado"
                 message="¿Estás seguro de que deseas eliminar a este empleado permanentemente? Esta acción no se puede deshacer."
                 loading={deleting}
+            />
+
+            <CargoModal
+                isOpen={isCargoModalOpen}
+                onClose={() => setIsCargoModalOpen(false)}
             />
         </div>
     );

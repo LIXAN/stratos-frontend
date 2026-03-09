@@ -13,6 +13,14 @@ export const DashboardPage: React.FC = () => {
                 return <ProjectsView />;
             case 'Recursos Humanos':
                 return <RRHHView />;
+            case 'Conexion WhatsApp':
+                return <div className="p-8 text-center text-gray-400">Pronto podrás configurar la conexión de WhatsApp desde aquí.</div>;
+            case 'Asistente IA':
+                return <div className="p-8 text-center text-gray-400">El Asistente de IA está en construcción.</div>;
+            case 'Reportes':
+                return <div className="p-8 text-center text-gray-400">Módulo de reportes en progreso.</div>;
+            case 'Calendario':
+                return <div className="p-8 text-center text-gray-400">El calendario interactivo estará disponible pronto.</div>;
             case 'Resumen':
             default:
                 return <DashboardResumenView />;

@@ -9,7 +9,7 @@ interface DashboardLayoutProps {
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab, onTabChange }) => {
-    const tabs = ['Resumen', 'Proyectos', 'Inventario', 'Ventas', 'Recursos Humanos', 'Reportes'];
+    const tabs = ['Resumen', 'Proyectos', 'Recursos Humanos', 'Conexion WhatsApp', 'Asistente IA', 'Reportes', 'Calendario'];
 
     return (
         <div className="min-h-screen bg-dark-900 text-white theme-light:bg-slate-50 theme-light:text-slate-900 flex overflow-hidden">
