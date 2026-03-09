@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Typography } from '../atoms/Typography';
 import { Button } from '../atoms/Button';
 import { Header } from '../organisms/Header';
-import { projectService } from '../../services/api';
+import { projectService, getFullImageUrl } from '../../services/api';
 import { TorreDetailsView } from './TorreDetailsView';
 import ConfirmModal from '../atoms/ConfirmModal';
 import { TorreModal } from '../organisms/TorreModal';
@@ -102,10 +102,28 @@ const ProjectDetailsViewContent: React.FC<ProjectDetailsViewProps> = ({ projectI
         try {
             setSavingTipo(true);
             setTipoModalError(null);
+
+            let finalImageUrl = data.imagen_url;
+            if (data.imageFile) {
+                try {
+                    const uploadRes = await projectService.uploadImageTipo(data.imageFile);
+                    finalImageUrl = uploadRes.imagen_url;
+                } catch (error) {
+                    console.error("Error uploading image:", error);
+                    alert("Hubo un error al subir la imagen. Por favor, intenta de nuevo.");
+                    setSavingTipo(false);
+                    return;
+                }
+            }
+
+            const payload = { ...data };
+            delete payload.imageFile;
+            payload.imagen_url = finalImageUrl || null;
+
             if (editingTipo) {
-                await projectService.updateTipoPlantilla(projectId, editingTipo.id, data);
+                await projectService.updateTipoPlantilla(projectId, editingTipo.id, payload);
             } else {
-                await projectService.createTipoPlantilla(projectId, data);
+                await projectService.createTipoPlantilla(projectId, payload);
             }
             setIsTipoModalOpen(false);
             setEditingTipo(null);
@@ -220,7 +238,7 @@ const ProjectDetailsViewContent: React.FC<ProjectDetailsViewProps> = ({ projectI
                 <div className="glass-card theme-light:bg-white theme-light:border-slate-200 theme-light:shadow-slate-200/50 p-6 rounded-2xl">
                     <div className="flex justify-between items-center mb-4">
                         <Typography variant="h2">Información General</Typography>
-                        <Button variant="secondary" onClick={() => setIsEditProjectModalOpen(true)} className="text-sm py-1.5 px-4 h-auto">
+                        <Button variant="primary" onClick={() => setIsEditProjectModalOpen(true)} className="text-sm py-1.5 px-4 h-auto">
                             Editar Información
                         </Button>
                     </div>
@@ -295,7 +313,7 @@ const ProjectDetailsViewContent: React.FC<ProjectDetailsViewProps> = ({ projectI
                         {editingImage ? (
                             <div className="flex gap-2 items-center">
                                 <input
-                                    type="url"
+                                    type="text"
                                     value={tempImageUrl}
                                     onChange={(e) => setTempImageUrl(e.target.value)}
                                     placeholder="https://ejemplo.com/imagen.jpg"
@@ -318,7 +336,7 @@ const ProjectDetailsViewContent: React.FC<ProjectDetailsViewProps> = ({ projectI
                         ) : (
                             <div className="text-sm text-gray-400 truncate theme-light:text-slate-500">
                                 {project.imagen_url ? (
-                                    <a href={project.imagen_url} target="_blank" rel="noreferrer" className="hover:text-white hover:underline transition-colors theme-light:hover:text-slate-800">
+                                    <a href={getFullImageUrl(project.imagen_url)} target="_blank" rel="noreferrer" className="hover:text-white hover:underline transition-colors theme-light:hover:text-slate-800">
                                         {project.imagen_url}
                                     </a>
                                 ) : (
@@ -394,6 +412,11 @@ const ProjectDetailsViewContent: React.FC<ProjectDetailsViewProps> = ({ projectI
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {project.tipos_plantilla.map((tipo: any) => (
                                 <div key={tipo.id} className="bg-dark-900 border border-white/10 p-4 rounded-xl flex flex-col hover:border-saas-500 transition-colors cursor-pointer group theme-light:bg-slate-50 theme-light:border-slate-200 theme-light:hover:border-saas-400 relative" onClick={() => { setEditingTipo(tipo); setIsTipoModalOpen(true); }}>
+                                    {tipo.imagen_url && (
+                                        <div className="w-full h-40 mb-4 rounded-lg overflow-hidden bg-black/20 flex items-center justify-center theme-light:bg-slate-200">
+                                            <img src={getFullImageUrl(tipo.imagen_url)} alt={tipo.nombre} className="max-h-full max-w-full object-contain" />
+                                        </div>
+                                    )}
                                     <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                         <button onClick={(e) => handleDeleteTipoClick(tipo.id, e)} className="text-gray-500 hover:text-red-500 p-1 bg-dark-800 rounded-md theme-light:bg-white theme-light:shadow-sm" title="Eliminar Tipo">
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>

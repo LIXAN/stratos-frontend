@@ -2,6 +2,12 @@ import axiosInstance from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+export const getFullImageUrl = (url: string | null | undefined) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return `${API_URL}${url}`;
+};
+
 export const api = axiosInstance.create({
     baseURL: API_URL,
     headers: {
@@ -34,15 +40,23 @@ export const authService = {
 
 export const projectService = {
     getProjects: async () => {
-        const response = await api.get('/proyectos/');
+        const response = await api.get('/proyectos');
         return response.data;
     },
     getProject: async (id: string) => {
         const response = await api.get(`/proyectos/${id}`);
         return response.data;
     },
+    uploadImageProject: async (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await api.post('/proyectos/upload-image', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
+    },
     createProject: async (data: any) => {
-        const response = await api.post('/proyectos/', data);
+        const response = await api.post('/proyectos', data);
         return response.data;
     },
     updateProject: async (id: string, data: any) => {
@@ -55,6 +69,14 @@ export const projectService = {
     },
     createTipoPlantilla: async (projectId: string, data: any) => {
         const response = await api.post(`/proyectos/${projectId}/tipos`, data);
+        return response.data;
+    },
+    uploadImageTipo: async (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await api.post(`/proyectos/tipos/upload-image`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
         return response.data;
     },
     getTorre: async (projectId: string, torreId: string) => {
@@ -87,6 +109,14 @@ export const projectService = {
     },
     getApartamentosPorPiso: async (projectId: string, torreId: string, pisoId: string) => {
         const response = await api.get(`/proyectos/${projectId}/torres/${torreId}/pisos/${pisoId}/apartamentos`);
+        return response.data;
+    },
+    getZonasSociales: async () => {
+        const response = await api.get('/proyectos/zonas-sociales/opciones');
+        return response.data;
+    },
+    addZonaSocial: async (data: { nombre: string }) => {
+        const response = await api.post('/proyectos/zonas-sociales/opciones', data);
         return response.data;
     }
 };
