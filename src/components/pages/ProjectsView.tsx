@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ProjectModal } from '../organisms/ProjectModal';
-import { projectService } from '../../services/api';
+import { projectService, getFullImageUrl } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { Header } from '../organisms/Header';
 import { ProjectDetailsView } from './ProjectDetailsView';
@@ -182,7 +182,7 @@ export const ProjectsView: React.FC = () => {
                                     {project.imagen_url ? (
                                         <div
                                             className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                                            style={{ backgroundImage: `url(${project.imagen_url})` }}
+                                            style={{ backgroundImage: `url(${getFullImageUrl(project.imagen_url)})` }}
                                         />
                                     ) : (
                                         <div className="absolute inset-0 bg-dark-800 theme-light:bg-slate-300 transition-transform duration-700 group-hover:scale-105" />
