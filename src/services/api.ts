@@ -137,5 +137,21 @@ export const rrhhService = {
     deleteEmpleado: async (id: string) => {
         const response = await api.delete(`/rrhh/empleados/${id}`);
         return response.data;
+    },
+    getCargos: async () => {
+        const response = await api.get('/rrhh/cargos');
+        return response.data;
+    },
+    createCargo: async (data: { nombre: string }) => {
+        const response = await api.post('/rrhh/cargos', data);
+        return response.data;
+    },
+    updateCargo: async (id: string, data: { nombre: string }) => {
+        const response = await api.put(`/rrhh/cargos/${id}`, data);
+        return response.data;
+    },
+    deleteCargo: async (id: string) => {
+        const response = await api.delete(`/rrhh/cargos/${id}`);
+        return response.data;
     }
 };
