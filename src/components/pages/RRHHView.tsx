@@ -6,6 +6,7 @@ import { EmpleadoModal } from '../organisms/EmpleadoModal';
 import { CargoModal } from '../organisms/CargoModal';
 import { rrhhService } from '../../services/api';
 import ConfirmModal from '../atoms/ConfirmModal';
+import AlertModal from '../atoms/AlertModal';
 
 export const RRHHView = () => {
     const [empleados, setEmpleados] = useState<any[]>([]);
@@ -20,6 +21,14 @@ export const RRHHView = () => {
     const [deleting, setDeleting] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState('');
+
+    const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean, title: string, message: string, isError: boolean }>({
+        isOpen: false, title: '', message: '', isError: true
+    });
+
+    const showAlert = (message: string, isError = true, title = "Aviso") => {
+        setAlertConfig({ isOpen: true, title, message, isError });
+    };
 
     useEffect(() => {
         loadEmpleados();
@@ -50,7 +59,7 @@ export const RRHHView = () => {
             loadEmpleados();
         } catch (error) {
             console.error("Error guardando empleado:", error);
-            alert("Ocurrió un error al guardar el empleado.");
+            showAlert("Ocurrió un error al guardar el empleado.");
         } finally {
             setSaving(false);
         }
@@ -66,9 +75,9 @@ export const RRHHView = () => {
         } catch (error: any) {
             console.error("Error eliminando empleado:", error);
             if (error?.response?.status === 403) {
-                alert("No tienes permisos para eliminar empleados.");
+                showAlert("No tienes permisos para eliminar empleados.");
             } else {
-                alert("Ocurrió un error al eliminar el empleado.");
+                showAlert("Ocurrió un error al eliminar el empleado.");
             }
         } finally {
             setDeleting(false);
@@ -178,7 +187,7 @@ export const RRHHView = () => {
                                             <td className="p-4 text-right">
                                                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button
-                                                        onClick={(e) => { e.stopPropagation(); alert("Gestión de accesos en desarrollo"); }}
+                                                        onClick={(e) => { e.stopPropagation(); showAlert("Gestión de accesos en desarrollo", false, "Próximamente"); }}
                                                         className="text-gray-400 hover:text-blue-400 p-2 transition-colors theme-light:text-slate-400 theme-light:hover:text-blue-500"
                                                         title="Gestionar Accesos"
                                                     >
@@ -235,6 +244,14 @@ export const RRHHView = () => {
             <CargoModal
                 isOpen={isCargoModalOpen}
                 onClose={() => setIsCargoModalOpen(false)}
+            />
+
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                isError={alertConfig.isError}
             />
         </div>
     );

@@ -5,9 +5,11 @@ import { Header } from '../organisms/Header';
 import { projectService, getFullImageUrl } from '../../services/api';
 import { TorreDetailsView } from './TorreDetailsView';
 import ConfirmModal from '../atoms/ConfirmModal';
+import AlertModal from '../atoms/AlertModal';
 import { TorreModal } from '../organisms/TorreModal';
 import { TipoPlantillaModal } from '../organisms/TipoPlantillaModal';
 import { ProjectModal } from '../organisms/ProjectModal';
+import { useAuth } from '../../context/AuthContext';
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
     constructor(props: { children: React.ReactNode }) {
@@ -56,15 +58,34 @@ const ProjectDetailsViewContent: React.FC<ProjectDetailsViewProps> = ({ projectI
     const [editingTipo, setEditingTipo] = useState<any>(null);
     const [tipoModalError, setTipoModalError] = useState<string | null>(null);
 
+    const [editingTorre, setEditingTorre] = useState<any>(null);
+
     const [torreToDelete, setTorreToDelete] = useState<string | null>(null);
     const [tipoToDelete, setTipoToDelete] = useState<string | null>(null);
     const [deleting, setDeleting] = useState(false);
+
+    const [torreToDuplicate, setTorreToDuplicate] = useState<string | null>(null);
+    const [duplicating, setDuplicating] = useState(false);
+
+    const [projectToDelete, setProjectToDelete] = useState(false);
+    const [deletingProject, setDeletingProject] = useState(false);
+
+    const { user } = useAuth();
+    const userRole = user?.rol || '';
 
     const [editingImage, setEditingImage] = useState(false);
     const [tempImageUrl, setTempImageUrl] = useState('');
     const [savingImage, setSavingImage] = useState(false);
 
     const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
+
+    const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean, title: string, message: string, isError: boolean }>({
+        isOpen: false, title: '', message: '', isError: true
+    });
+
+    const showAlert = (message: string, isError = true, title = "Aviso") => {
+        setAlertConfig({ isOpen: true, title, message, isError });
+    };
 
     const fetchProject = async () => {
         try {
@@ -85,14 +106,24 @@ const ProjectDetailsViewContent: React.FC<ProjectDetailsViewProps> = ({ projectI
         }
     }, [projectId, selectedTorreId]);
 
-    const handleCreateTorre = async (data: any) => {
+    const handleSaveTorre = async (data: any) => {
         try {
             setSavingTorre(true);
-            await projectService.createTorre(projectId, data);
+            if (editingTorre) {
+                await projectService.updateTorre(projectId, editingTorre.id, data);
+            } else {
+                await projectService.createTorre(projectId, data);
+            }
             setIsTorreModalOpen(false);
+            setEditingTorre(null);
             fetchProject();
-        } catch (error) {
-            console.error("Error creating torre", error);
+        } catch (error: any) {
+            console.error("Error saving torre", error);
+            if (error.response?.data?.detail) {
+                showAlert(error.response.data.detail);
+            } else {
+                showAlert("Ocurrió un error al guardar.");
+            }
         } finally {
             setSavingTorre(false);
         }
@@ -110,7 +141,7 @@ const ProjectDetailsViewContent: React.FC<ProjectDetailsViewProps> = ({ projectI
                     finalImageUrl = uploadRes.imagen_url;
                 } catch (error) {
                     console.error("Error uploading image:", error);
-                    alert("Hubo un error al subir la imagen. Por favor, intenta de nuevo.");
+                    showAlert("Hubo un error al subir la imagen. Por favor, intenta de nuevo.");
                     setSavingTipo(false);
                     return;
                 }
@@ -153,10 +184,30 @@ const ProjectDetailsViewContent: React.FC<ProjectDetailsViewProps> = ({ projectI
             fetchProject();
         } catch (error) {
             console.error("Error deleting torre", error);
-            alert("Hubo un error al eliminar la torre.");
+            showAlert("Hubo un error al eliminar la torre.");
         } finally {
             setDeleting(false);
             setTorreToDelete(null);
+        }
+    };
+
+    const handleDuplicateTorreClick = (torreId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setTorreToDuplicate(torreId);
+    };
+
+    const confirmDuplicateTorre = async () => {
+        if (!torreToDuplicate) return;
+        setDuplicating(true);
+        try {
+            await projectService.duplicateTorre(projectId, torreToDuplicate);
+            fetchProject();
+        } catch (error) {
+            console.error("Error duplicating torre", error);
+            showAlert("Hubo un error al duplicar la torre.");
+        } finally {
+            setDuplicating(false);
+            setTorreToDuplicate(null);
         }
     };
 
@@ -174,9 +225,9 @@ const ProjectDetailsViewContent: React.FC<ProjectDetailsViewProps> = ({ projectI
         } catch (error: any) {
             console.error("Error deleting tipo", error);
             if (error.response && error.response.status === 400) {
-                alert(error.response.data.detail || "No se puede eliminar porque hay apartamentos usándolo.");
+                showAlert(error.response.data.detail || "No se puede eliminar porque hay apartamentos usándolo.");
             } else {
-                alert("Hubo un error al eliminar el Tipo de Plantilla.");
+                showAlert("Hubo un error al eliminar el Tipo de Plantilla.");
             }
         } finally {
             setDeleting(false);
@@ -193,7 +244,7 @@ const ProjectDetailsViewContent: React.FC<ProjectDetailsViewProps> = ({ projectI
             setEditingImage(false);
         } catch (error) {
             console.error("Error updating image", error);
-            alert("Hubo un error al actualizar la imagen del proyecto.");
+            showAlert("Hubo un error al actualizar la imagen del proyecto.");
         } finally {
             setSavingImage(false);
         }
@@ -206,7 +257,19 @@ const ProjectDetailsViewContent: React.FC<ProjectDetailsViewProps> = ({ projectI
             fetchProject();
         } catch (error) {
             console.error("Error updating project", error);
-            alert("Hubo un error al actualizar el proyecto.");
+            showAlert("Hubo un error al actualizar el proyecto.");
+        }
+    };
+
+    const handleDeleteProject = async () => {
+        setDeletingProject(true);
+        try {
+            await projectService.deleteProject(projectId);
+            onBack();
+        } catch (error: any) {
+            console.error("Error deleting project", error);
+            showAlert(error.response?.data?.detail || "No se pudo eliminar el proyecto.");
+            setDeletingProject(false);
         }
     };
 
@@ -238,9 +301,19 @@ const ProjectDetailsViewContent: React.FC<ProjectDetailsViewProps> = ({ projectI
                 <div className="glass-card theme-light:bg-white theme-light:border-slate-200 theme-light:shadow-slate-200/50 p-6 rounded-2xl">
                     <div className="flex justify-between items-center mb-4">
                         <Typography variant="h2">Información General</Typography>
-                        <Button variant="primary" onClick={() => setIsEditProjectModalOpen(true)} className="text-sm py-1.5 px-4 h-auto">
-                            Editar Información
-                        </Button>
+                        <div className="flex gap-2">
+                            {userRole && userRole.toLowerCase().includes('admin') && (
+                                <button
+                                    onClick={() => setProjectToDelete(true)}
+                                    className="px-4 py-1.5 text-sm font-semibold rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors border border-transparent theme-light:bg-red-50 theme-light:text-red-600 theme-light:hover:bg-red-500 theme-light:hover:text-white"
+                                >
+                                    Eliminar Proyecto
+                                </button>
+                            )}
+                            <Button variant="primary" onClick={() => setIsEditProjectModalOpen(true)} className="text-sm py-1.5 px-4 h-auto">
+                                Editar Información
+                            </Button>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -365,7 +438,7 @@ const ProjectDetailsViewContent: React.FC<ProjectDetailsViewProps> = ({ projectI
                 <div className="glass-card theme-light:bg-white theme-light:border-slate-200 theme-light:shadow-slate-200/50 p-6 rounded-2xl">
                     <div className="flex justify-between items-center mb-6">
                         <Typography variant="h2">Administración de {esCasas ? 'Manzanas' : 'Torres'}</Typography>
-                        <Button onClick={() => setIsTorreModalOpen(true)}>
+                        <Button onClick={() => { setEditingTorre(null); setIsTorreModalOpen(true); }}>
                             + Agregar {esCasas ? 'Manzana' : 'Torre'}
                         </Button>
                     </div>
@@ -377,10 +450,30 @@ const ProjectDetailsViewContent: React.FC<ProjectDetailsViewProps> = ({ projectI
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {project.torres.map((torre: any) => (
                                 <div key={torre.id} className="bg-dark-900 border border-white/10 p-4 rounded-xl hover:border-saas-500 transition-colors cursor-pointer group theme-light:bg-slate-50 theme-light:border-slate-200 theme-light:hover:border-saas-400 relative" onClick={() => setSelectedTorreId(torre.id)}>
-                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={(e) => handleDeleteTorreClick(torre.id, e)} className="text-gray-500 hover:text-red-500 p-1 bg-dark-800 rounded-md theme-light:bg-white theme-light:shadow-sm" title={`Eliminar ${esCasas ? 'Manzana' : 'Torre'}`}>
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                        </button>
+                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                                        <div className="flex gap-1 mt-1 sm:mt-0">
+                                            {(userRole && userRole.toLowerCase().includes('admin')) && (
+                                                <>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setEditingTorre(torre); setIsTorreModalOpen(true); }}
+                                                        className="p-1.5 text-gray-400 hover:text-saas-400 hover:bg-white/5 rounded-md transition-colors theme-light:hover:bg-slate-100 theme-light:hover:text-saas-600"
+                                                        title="Editar nombre"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => handleDuplicateTorreClick(torre.id, e)}
+                                                        className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-white/5 rounded-md transition-colors theme-light:hover:bg-slate-100 theme-light:hover:text-blue-600"
+                                                        title="Duplicar"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
+                                                    </button>
+                                                </>
+                                            )}
+                                            <button onClick={(e) => handleDeleteTorreClick(torre.id, e)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-white/5 rounded-md transition-colors theme-light:hover:bg-slate-100 theme-light:hover:text-red-600" title={`Eliminar ${esCasas ? 'Manzana' : 'Torre'}`}>
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                            </button>
+                                        </div>
                                     </div>
                                     <h3 className="text-lg font-bold text-white group-hover:text-saas-400 transition-colors theme-light:text-slate-800 pr-8">{torre.nombre}</h3>
                                     <div className="flex justify-between mt-2 text-sm text-gray-400 theme-light:text-slate-500">
@@ -447,10 +540,11 @@ const ProjectDetailsViewContent: React.FC<ProjectDetailsViewProps> = ({ projectI
                 isTorreModalOpen && (
                     <TorreModal
                         isOpen={isTorreModalOpen}
-                        onClose={() => setIsTorreModalOpen(false)}
-                        onSubmit={handleCreateTorre}
+                        onClose={() => { setIsTorreModalOpen(false); setEditingTorre(null); }}
+                        onSubmit={handleSaveTorre}
                         loading={savingTorre}
-                        esCasas={esCasas}
+                        esCasas={project?.es_vis || false}
+                        initialData={editingTorre}
                     />
                 )
             }
@@ -478,12 +572,33 @@ const ProjectDetailsViewContent: React.FC<ProjectDetailsViewProps> = ({ projectI
             />
 
             <ConfirmModal
+                isOpen={torreToDuplicate !== null}
+                onClose={() => setTorreToDuplicate(null)}
+                onConfirm={confirmDuplicateTorre}
+                title={`Duplicar ${esCasas ? 'Manzana' : 'Torre'}`}
+                message={`¿Estás seguro de que deseas duplicar esta ${esCasas ? 'Manzana' : 'Torre'}? Se clonarán todos los pisos y apartamentos vinculados a la misma.`}
+                loading={duplicating}
+                confirmText="Duplicar"
+                loadingText="Duplicando..."
+                confirmButtonClass="bg-saas-500 hover:bg-saas-600 text-dark-900"
+            />
+
+            <ConfirmModal
                 isOpen={tipoToDelete !== null}
                 onClose={() => setTipoToDelete(null)}
                 onConfirm={confirmDeleteTipo}
-                title={`Eliminar Tipo de ${esCasas ? 'Casa' : 'Apartamento'}`}
-                message={`¿Estás seguro de que deseas eliminar este Tipo de ${esCasas ? 'Casa' : 'Apartamento'}?`}
+                title="Eliminar Tipo"
+                message="¿Estás seguro de que deseas eliminar este tipo de apartamento/casa? Esta acción no se puede deshacer."
                 loading={deleting}
+            />
+
+            <ConfirmModal
+                isOpen={projectToDelete}
+                onClose={() => setProjectToDelete(false)}
+                onConfirm={handleDeleteProject}
+                title="Eliminar Proyecto"
+                message="¿Estás seguro de que deseas eliminar este proyecto y todos sus datos relacionados (torres, pisos, tipos, etc.)? Esta acción es irreversible."
+                loading={deletingProject}
             />
 
             <ProjectModal
@@ -491,6 +606,14 @@ const ProjectDetailsViewContent: React.FC<ProjectDetailsViewProps> = ({ projectI
                 initialData={project}
                 onClose={() => setIsEditProjectModalOpen(false)}
                 onSubmit={handleUpdateProject}
+            />
+
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                isError={alertConfig.isError}
             />
         </div >
     );

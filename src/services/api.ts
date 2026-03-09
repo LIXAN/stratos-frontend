@@ -99,6 +99,10 @@ export const projectService = {
         const response = await api.delete(`/proyectos/${projectId}/torres/${torreId}`);
         return response.data;
     },
+    updateTorre: async (projectId: string, torreId: string, data: any) => {
+        const response = await api.put(`/proyectos/${projectId}/torres/${torreId}`, data);
+        return response.data;
+    },
     deletePiso: async (projectId: string, torreId: string, pisoId: string) => {
         const response = await api.delete(`/proyectos/${projectId}/torres/${torreId}/pisos/${pisoId}`);
         return response.data;
@@ -117,6 +121,14 @@ export const projectService = {
     },
     addZonaSocial: async (data: { nombre: string }) => {
         const response = await api.post('/proyectos/zonas-sociales/opciones', data);
+        return response.data;
+    },
+    deleteProject: async (id: string) => {
+        const response = await api.delete(`/proyectos/${id}`);
+        return response.data;
+    },
+    duplicateTorre: async (projectId: string, torreId: string) => {
+        const response = await api.post(`/proyectos/${projectId}/torres/${torreId}/duplicar`);
         return response.data;
     }
 };

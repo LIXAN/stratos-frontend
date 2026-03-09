@@ -9,9 +9,16 @@ interface ConfirmModalProps {
     title: string;
     message: string;
     loading?: boolean;
+    confirmText?: string;
+    loadingText?: string;
+    confirmButtonClass?: string;
 }
 
-const ConfirmModal: React.FC<ConfirmModalProps> = ({ isOpen, onClose, onConfirm, title, message, loading = false }) => {
+const ConfirmModal: React.FC<ConfirmModalProps> = ({
+    isOpen, onClose, onConfirm, title, message, loading = false,
+    confirmText = 'Eliminar', loadingText = 'Eliminando...',
+    confirmButtonClass = "bg-red-500 hover:bg-red-600"
+}) => {
     if (!isOpen) return null;
 
     return (
@@ -31,9 +38,9 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({ isOpen, onClose, onConfirm,
                     <button
                         onClick={onConfirm}
                         disabled={loading}
-                        className="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className={`${confirmButtonClass} text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                        {loading ? 'Eliminando...' : 'Eliminar'}
+                        {loading ? loadingText : confirmText}
                     </button>
                 </div>
             </div>

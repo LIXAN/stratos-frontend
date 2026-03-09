@@ -8,17 +8,28 @@ interface TorreModalProps {
     onSubmit: (data: any) => void;
     loading: boolean;
     esCasas: boolean;
+    initialData?: any;
 }
 
-export const TorreModal: React.FC<TorreModalProps> = ({ isOpen, onClose, onSubmit, loading, esCasas }) => {
+export const TorreModal: React.FC<TorreModalProps> = ({ isOpen, onClose, onSubmit, loading, esCasas, initialData }) => {
     const [nombre, setNombre] = useState('');
     const [pisos, setPisos] = useState<number | ''>('');
+
+    React.useEffect(() => {
+        if (initialData) {
+            setNombre(initialData.nombre);
+            setPisos(initialData.numero_pisos);
+        } else {
+            setNombre('');
+            setPisos('');
+        }
+    }, [initialData, isOpen]);
 
     if (!isOpen) return null;
     return (
         <div className="fixed inset-0 bg-dark-900/90 flex items-center justify-center z-50 p-4">
             <div className="bg-dark-800 border border-white/10 p-6 rounded-2xl w-full max-w-md shadow-2xl relative theme-light:bg-white theme-light:border-slate-200">
-                <Typography variant="h2" className="mb-4">Nueva {esCasas ? 'Manzana' : 'Torre'}</Typography>
+                <Typography variant="h2" className="mb-4">{initialData ? 'Editar' : 'Nueva'} {esCasas ? 'Manzana' : 'Torre'}</Typography>
                 <form onSubmit={e => { e.preventDefault(); onSubmit({ nombre, numero_pisos: esCasas ? 1 : Number(pisos) }); }}>
                     <div className="space-y-4">
                         <div>
@@ -34,7 +45,7 @@ export const TorreModal: React.FC<TorreModalProps> = ({ isOpen, onClose, onSubmi
                     </div>
                     <div className="mt-6 flex justify-end space-x-3">
                         <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
-                        <Button type="submit" disabled={loading}>{loading ? 'Guardando...' : `Crear ${esCasas ? 'Manzana' : 'Torre'}`}</Button>
+                        <Button type="submit" disabled={loading}>{loading ? 'Guardando...' : (initialData ? 'Guardar Cambios' : `Crear ${esCasas ? 'Manzana' : 'Torre'}`)}</Button>
                     </div>
                 </form>
             </div>

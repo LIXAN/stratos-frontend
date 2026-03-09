@@ -3,6 +3,7 @@ import { Typography } from '../atoms/Typography';
 import { Button } from '../atoms/Button';
 import { rrhhService } from '../../services/api';
 import ConfirmModal from '../atoms/ConfirmModal';
+import AlertModal from '../atoms/AlertModal';
 
 interface CargoModalProps {
     isOpen: boolean;
@@ -22,6 +23,14 @@ export const CargoModal: React.FC<CargoModalProps> = ({ isOpen, onClose }) => {
 
     // Delete state
     const [cargoToDelete, setCargoToDelete] = useState<string | null>(null);
+
+    const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean, title: string, message: string, isError: boolean }>({
+        isOpen: false, title: '', message: '', isError: true
+    });
+
+    const showAlert = (message: string, isError = true, title = "Aviso") => {
+        setAlertConfig({ isOpen: true, title, message, isError });
+    };
 
     useEffect(() => {
         if (isOpen) {
@@ -50,9 +59,9 @@ export const CargoModal: React.FC<CargoModalProps> = ({ isOpen, onClose }) => {
             const newCargo = await rrhhService.createCargo({ nombre: newCargoName.trim() });
             setCargos(prev => [...prev, newCargo]);
             setNewCargoName('');
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error creando cargo:", error);
-            alert("No se pudo crear el cargo. Puede que ya exista.");
+            showAlert(error.response?.data?.detail || "No se pudo crear el cargo. Puede que ya exista.");
         } finally {
             setSaving(false);
         }
@@ -70,7 +79,7 @@ export const CargoModal: React.FC<CargoModalProps> = ({ isOpen, onClose }) => {
             setEditingCargoId(null);
         } catch (error: any) {
             console.error("Error actualizando cargo:", error);
-            alert(error.response?.data?.detail || "No se pudo actualizar el cargo. Puede que ya exista.");
+            showAlert(error.response?.data?.detail || "No se pudo actualizar el cargo. Puede que ya exista.");
         } finally {
             setActionLoading(null);
         }
@@ -85,7 +94,7 @@ export const CargoModal: React.FC<CargoModalProps> = ({ isOpen, onClose }) => {
             setCargoToDelete(null);
         } catch (error: any) {
             console.error("Error eliminando cargo:", error);
-            alert(error.response?.data?.detail || "No se pudo eliminar el cargo. Es posible que esté en uso.");
+            showAlert(error.response?.data?.detail || "No se pudo eliminar el cargo. Es posible que esté en uso.");
             setCargoToDelete(null);
         } finally {
             setActionLoading(null);
@@ -189,6 +198,14 @@ export const CargoModal: React.FC<CargoModalProps> = ({ isOpen, onClose }) => {
                 title="Eliminar Cargo"
                 message="¿Estás seguro de que deseas eliminar este cargo permanentemente? Esta acción no se puede deshacer."
                 loading={actionLoading !== null}
+            />
+
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                isError={alertConfig.isError}
             />
         </div>
     );

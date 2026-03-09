@@ -23,8 +23,13 @@ const icons: Record<string, React.ReactNode> = {
 };
 
 export const Sidebar: React.FC<SidebarProps> = ({ tabs, activeTab, onTabChange }) => {
-    const { logout } = useAuth();
+    const { logout, user } = useAuth();
     const { isSidebarCollapsed, toggleSidebar } = useUI();
+
+    const userRoleFormatted = user?.rol
+        ? user.rol.replace('_', ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+        : 'Rol Desconocido';
+    const initials = user?.sub ? user.sub.substring(0, 2).toUpperCase() : 'US';
     return (
         <aside className={`flex-shrink-0 relative border-r border-white/5 bg-gradient-to-b from-dark-900 to-dark-800 shadow-2xl hidden md:flex flex-col z-20 ${isSidebarCollapsed ? 'w-20' : 'w-64'} transition-[width] duration-300 ease-in-out`}>
             {/* Elegant outer border toggle button */}
@@ -45,7 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ tabs, activeTab, onTabChange }
                     </svg>
                     <div className={`flex flex-col ml-3 transition duration-300 ease-in-out ${isSidebarCollapsed ? 'opacity-0 translate-x-[-10px] pointer-events-none absolute' : 'opacity-100 translate-x-0 relative'}`}>
                         <span className="tracking-wide">PLANIMY</span>
-                        <span className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold leading-none">by LEXIAN</span>
+                        <span className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold leading-none">by LIXAN</span>
                     </div>
                 </div>
             </div>
@@ -65,7 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ tabs, activeTab, onTabChange }
 
             <div className="p-4 border-t border-white/10 flex items-center relative h-16">
                 <div className={`absolute left-4 transition duration-300 ease-in-out whitespace-nowrap origin-left ${isSidebarCollapsed ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'}`}>
-                    <UserWidget name="Super Admin" email="admin@saas.com" initials="SA" />
+                    <UserWidget name={userRoleFormatted} email={user?.sub || 'Usuario'} initials={initials} />
                 </div>
                 <button
                     onClick={logout}

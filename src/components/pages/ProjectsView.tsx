@@ -231,8 +231,9 @@ export const ProjectsView: React.FC = () => {
                                         </button>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+                            ))
+                            }
+                        </div >
                     ) : (
                         <div className="text-center text-gray-500 py-16 border-2 border-dashed border-white/10 rounded-2xl theme-light:border-slate-200 theme-light:text-slate-500">
                             No se encontraron proyectos con los filtros actuales.
@@ -241,13 +242,13 @@ export const ProjectsView: React.FC = () => {
                 ) : (
                     <div className="text-center text-gray-400 py-10 animate-pulse">Cargando catálogo...</div>
                 )}
-            </div>
+            </div >
 
             <ProjectModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSubmit={handleCreateProject}
             />
-        </div>
+        </div >
     );
 };

@@ -4,6 +4,7 @@ import { Button } from '../atoms/Button';
 import { Header } from '../organisms/Header';
 import { projectService } from '../../services/api';
 import ConfirmModal from '../atoms/ConfirmModal';
+import AlertModal from '../atoms/AlertModal';
 import { PisoModal } from '../organisms/PisoModal';
 
 interface TorreDetailsViewProps {
@@ -23,6 +24,14 @@ export const TorreDetailsView: React.FC<TorreDetailsViewProps> = ({ projectId, t
 
     const [pisoToDelete, setPisoToDelete] = useState<string | null>(null);
     const [deleting, setDeleting] = useState(false);
+
+    const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean, title: string, message: string, isError: boolean }>({
+        isOpen: false, title: '', message: '', isError: true
+    });
+
+    const showAlert = (message: string, isError = true, title = "Aviso") => {
+        setAlertConfig({ isOpen: true, title, message, isError });
+    };
 
     const esCasas = project?.tipo_inmueble === 'Casas';
 
@@ -59,9 +68,9 @@ export const TorreDetailsView: React.FC<TorreDetailsViewProps> = ({ projectId, t
         } catch (error: any) {
             console.error("Error saving piso", error);
             if (error.response?.data?.detail) {
-                alert(`Error: ${error.response.data.detail}`);
+                showAlert(`Error: ${error.response.data.detail}`);
             } else {
-                alert("Ocurrió un error al guardar el piso.");
+                showAlert("Ocurrió un error al guardar el piso.");
             }
         } finally {
             setSavingPiso(false);
@@ -86,7 +95,7 @@ export const TorreDetailsView: React.FC<TorreDetailsViewProps> = ({ projectId, t
             fetchTorreAndTipos();
         } catch (error) {
             console.error("Error deleting piso", error);
-            alert("Hubo un error al eliminar el piso.");
+            showAlert("Hubo un error al eliminar el piso.");
         } finally {
             setDeleting(false);
             setPisoToDelete(null);
@@ -200,6 +209,14 @@ export const TorreDetailsView: React.FC<TorreDetailsViewProps> = ({ projectId, t
                 title="Eliminar Piso"
                 message="¿Estás seguro de que deseas eliminar este Piso? Se destruirán todos los apartamentos contenidos en él y se restarán del total de la Torre."
                 loading={deleting}
+            />
+
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                isError={alertConfig.isError}
             />
         </div>
     );

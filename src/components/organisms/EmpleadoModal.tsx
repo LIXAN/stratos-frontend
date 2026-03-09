@@ -3,6 +3,7 @@ import { Typography } from '../atoms/Typography';
 import { Button } from '../atoms/Button';
 import { Select } from '../atoms/Select';
 import { rrhhService } from '../../services/api';
+import AlertModal from '../atoms/AlertModal';
 
 interface EmpleadoModalProps {
     isOpen: boolean;
@@ -24,6 +25,14 @@ export const EmpleadoModal: React.FC<EmpleadoModalProps> = ({ isOpen, onClose, o
 
     // Cargo management
     const [cargos, setCargos] = useState<any[]>([]);
+
+    const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean, title: string, message: string, isError: boolean }>({
+        isOpen: false, title: '', message: '', isError: true
+    });
+
+    const showAlert = (message: string, isError = true, title = "Aviso") => {
+        setAlertConfig({ isOpen: true, title, message, isError });
+    };
 
     useEffect(() => {
         if (isOpen) {
@@ -68,7 +77,7 @@ export const EmpleadoModal: React.FC<EmpleadoModalProps> = ({ isOpen, onClose, o
                 <form onSubmit={e => {
                     e.preventDefault();
                     if (!cargoId) {
-                        alert("Por favor selecciona un Cargo.");
+                        showAlert("Por favor selecciona un Cargo.");
                         return;
                     }
                     onSubmit({
@@ -164,6 +173,14 @@ export const EmpleadoModal: React.FC<EmpleadoModalProps> = ({ isOpen, onClose, o
                     </div>
                 </form>
             </div>
+
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                isError={alertConfig.isError}
+            />
         </div>
     );
 };

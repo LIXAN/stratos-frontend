@@ -4,6 +4,7 @@ import { Typography } from '../atoms/Typography';
 import { FilterDropdown } from '../atoms/FilterDropdown';
 import { DEPARTAMENTOS, COLOMBIA_LOCATIONS } from '../../utils/colombia_locations';
 import { projectService, getFullImageUrl } from '../../services/api';
+import AlertModal from '../atoms/AlertModal';
 
 const COMMON_ZONAS = [
     "Piscina",
@@ -58,6 +59,14 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, onS
         }
     };
 
+    const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean, title: string, message: string, isError: boolean }>({
+        isOpen: false, title: '', message: '', isError: true
+    });
+
+    const showAlert = (message: string, isError = true, title = "Aviso") => {
+        setAlertConfig({ isOpen: true, title, message, isError });
+    };
+
     React.useEffect(() => {
         loadDynamicZonas();
         if (isOpen) {
@@ -102,7 +111,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, onS
                 finalImageUrl = uploadRes.imagen_url;
             } catch (error) {
                 console.error("Error uploading image:", error);
-                alert("Hubo un error al subir la imagen. Por favor, intenta de nuevo.");
+                showAlert("Hubo un error al subir la imagen. Por favor, intenta de nuevo.");
                 setLoading(false);
                 return;
             }
@@ -363,6 +372,14 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, onS
                     </div>
                 </form>
             </div>
+
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                isError={alertConfig.isError}
+            />
         </div>
     );
 };
