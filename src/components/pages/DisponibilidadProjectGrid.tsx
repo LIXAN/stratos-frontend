@@ -12,6 +12,7 @@ interface GridProps {
 export const DisponibilidadProjectGrid: React.FC<GridProps> = ({ project, onBack }) => {
     const [torres, setTorres] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [expandedTorres, setExpandedTorres] = useState<Record<string, boolean>>({});
 
     // Filtro de Disponibilidad
     const [filterEstado, setFilterEstado] = useState('Todos');
@@ -107,64 +108,80 @@ export const DisponibilidadProjectGrid: React.FC<GridProps> = ({ project, onBack
                         <p className="text-gray-400 theme-light:text-slate-500">Este proyecto aún no tiene estructura creada.</p>
                     </div>
                 ) : (
-                    <div className="space-y-12 pb-12">
-                        {torres.map(torre => (
-                            <div key={torre.id} className="glass-card rounded-2xl p-6 theme-light:bg-white theme-light:border-slate-200 theme-light:shadow-md border border-white/5">
-                                <Typography variant="h3" className="mb-6 pb-4 border-b border-white/10 theme-light:border-slate-100 flex items-center">
-                                    <svg className="w-6 h-6 mr-3 text-saas-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                    </svg>
-                                    {torre.nombre}
-                                </Typography>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-12">
+                        {torres.map(torre => {
+                            const isExpanded = expandedTorres[torre.id] || false;
 
-                                {torre.pisos && torre.pisos.length > 0 ? (
-                                    <div className="flex flex-col-reverse gap-4">
-                                        {[...torre.pisos].sort((a, b) => a.numero_nivel - b.numero_nivel).map(piso => {
-                                            const aptosFiltrados = (piso.apartamentos || []).filter((apto: any) => filterEstado === 'Todos' || apto.estado === filterEstado);
+                            return (
+                                <div key={torre.id} className="glass-card rounded-2xl overflow-hidden theme-light:bg-white theme-light:border-slate-200 theme-light:shadow-md border border-white/5">
+                                    <button
+                                        onClick={() => setExpandedTorres(prev => ({ ...prev, [torre.id]: !isExpanded }))}
+                                        className="w-full text-left p-6 flex justify-between items-center hover:bg-white/5 theme-light:hover:bg-slate-50 transition-colors"
+                                    >
+                                        <Typography variant="h3" className="flex items-center">
+                                            <svg className="w-6 h-6 mr-3 text-saas-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                            </svg>
+                                            {torre.nombre}
+                                        </Typography>
+                                        <svg className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
 
-                                            // Make sure we show the floor strictly if there are apartments matching, 
-                                            // OR if "Todos" is selected (so empty floors show up).
-                                            if (filterEstado !== 'Todos' && aptosFiltrados.length === 0) return null;
+                                    {isExpanded && (
+                                        <div className="p-6 pt-0 border-t border-white/5 theme-light:border-slate-100 mt-2">
+                                            {torre.pisos && torre.pisos.length > 0 ? (
+                                                <div className="flex flex-col-reverse gap-4">
+                                                    {[...torre.pisos].sort((a, b) => a.numero_nivel - b.numero_nivel).map(piso => {
+                                                        const aptosFiltrados = (piso.apartamentos || []).filter((apto: any) => filterEstado === 'Todos' || apto.estado === filterEstado);
 
-                                            return (
-                                                <div key={piso.id} className="flex gap-4 items-center">
-                                                    <div className="w-20 flex-shrink-0 text-center py-3 bg-dark-900 border border-white/10 rounded-lg theme-light:bg-slate-100 theme-light:border-slate-200">
-                                                        <span className="text-xs text-gray-400 block uppercase tracking-wider theme-light:text-slate-500">Nivel</span>
-                                                        <span className="text-xl font-bold text-white theme-light:text-slate-900">{piso.numero_nivel}</span>
+                                                        // Make sure we show the floor strictly if there are apartments matching, 
+                                                        // OR if "Todos" is selected (so empty floors show up).
+                                                        if (filterEstado !== 'Todos' && aptosFiltrados.length === 0) return null;
+
+                                                        return (
+                                                            <div key={piso.id} className="flex gap-4 items-center">
+                                                                <div className="w-20 flex-shrink-0 text-center py-3 bg-dark-900 border border-white/10 rounded-lg theme-light:bg-slate-100 theme-light:border-slate-200">
+                                                                    <span className="text-xs text-gray-400 block uppercase tracking-wider theme-light:text-slate-500">Nivel</span>
+                                                                    <span className="text-xl font-bold text-white theme-light:text-slate-900">{piso.numero_nivel}</span>
+                                                                </div>
+
+                                                                <div className="flex-1 flex flex-wrap gap-3 p-3 bg-dark-800/30 rounded-xl border border-white/5 theme-light:bg-slate-50 theme-light:border-slate-100">
+                                                                    {aptosFiltrados.length === 0 ? (
+                                                                        <span className="text-sm text-gray-500 theme-light:text-slate-400 py-2">Sin inmuebles en este nivel.</span>
+                                                                    ) : (
+                                                                        aptosFiltrados.map((apto: any, index: number) => {
+                                                                            let num = index + 1;
+                                                                            const identificadorVisual = `${piso.numero_nivel}${num < 10 ? '0' : ''}${num}`;
+                                                                            return (
+                                                                                <button
+                                                                                    key={apto.id}
+                                                                                    onClick={() => {
+                                                                                        setSelectedApartamento({ ...apto, nombreTorre: torre.nombre, numeroNivel: piso.numero_nivel, identificadorVisual });
+                                                                                        setIsModalOpen(true);
+                                                                                    }}
+                                                                                    className={`w-14 h-14 rounded-lg flex items-center justify-center font-bold text-white shadow-lg transition-transform hover:scale-105 active:scale-95 ${getEstadoColor(apto.estado)}`}
+                                                                                    title={`Ver detalles - Estado: ${apto.estado}`}
+                                                                                >
+                                                                                    {`${piso.numero_nivel}${num < 10 ? '0' : ''}${num}`}
+                                                                                </button>
+                                                                            );
+                                                                        })
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
                                                     </div>
-
-                                                    <div className="flex-1 flex flex-wrap gap-3 p-3 bg-dark-800/30 rounded-xl border border-white/5 theme-light:bg-slate-50 theme-light:border-slate-100">
-                                                        {aptosFiltrados.length === 0 ? (
-                                                            <span className="text-sm text-gray-500 theme-light:text-slate-400 py-2">Sin inmuebles en este nivel.</span>
-                                                        ) : (
-                                                            aptosFiltrados.map((apto: any, index: number) => {
-                                                                let num = index + 1;
-                                                                const identificadorVisual = `${piso.numero_nivel}${num < 10 ? '0' : ''}${num}`;
-                                                                return (
-                                                                    <button
-                                                                        key={apto.id}
-                                                                        onClick={() => {
-                                                                            setSelectedApartamento({ ...apto, nombreTorre: torre.nombre, numeroNivel: piso.numero_nivel, identificadorVisual });
-                                                                            setIsModalOpen(true);
-                                                                        }}
-                                                                        className={`w-14 h-14 rounded-lg flex items-center justify-center font-bold text-white shadow-lg transition-transform hover:scale-105 active:scale-95 ${getEstadoColor(apto.estado)}`}
-                                                                        title={`Ver detalles - Estado: ${apto.estado}`}
-                                                                    >
-                                                                        {`${piso.numero_nivel}${num < 10 ? '0' : ''}${num}`}
-                                                                    </button>
-                                                                );
-                                                            })
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                ) : (
-                                    <p className="text-gray-400 theme-light:text-slate-500 italic">No hay niveles configurados en esta torre.</p>
-                                )}
-                            </div>
-                        ))}
+                                                ) : (
+                                                    <p className="text-gray-400 theme-light:text-slate-500 italic">No hay niveles configurados en esta torre.</p>
+                                                )}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </div>

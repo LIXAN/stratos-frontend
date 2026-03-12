@@ -15,6 +15,15 @@ export const ApartamentoEstadoModal: React.FC<ApartamentoEstadoModalProps> = ({ 
     const [clienteId, setClienteId] = useState('');
     const [asesorId, setAsesorId] = useState('');
     const [loading, setLoading] = useState(false);
+    
+    // New Client State
+    const [isCreatingCliente, setIsCreatingCliente] = useState(false);
+    const [newCliente, setNewCliente] = useState({
+        nombre: '',
+        documento_identidad: '',
+        telefono: '',
+        email: ''
+    });
 
     const [clientes, setClientes] = useState<any[]>([]);
     const [asesores, setAsesores] = useState<any[]>([]);
@@ -24,6 +33,8 @@ export const ApartamentoEstadoModal: React.FC<ApartamentoEstadoModalProps> = ({ 
             setEstado(apartamento.estado || 'disponible');
             setClienteId(apartamento.cliente_id || '');
             setAsesorId(apartamento.asesor_id || '');
+            setIsCreatingCliente(false);
+            setNewCliente({ nombre: '', documento_identidad: '', telefono: '', email: '' });
 
             // Fetch select options
             fetchOptions();
@@ -55,9 +66,22 @@ export const ApartamentoEstadoModal: React.FC<ApartamentoEstadoModalProps> = ({ 
                     await api.post(`/apartamentos/${apartamento.id}/liberar`);
                 }
             } else if (estado === 'reservado' || estado === 'vendido') {
+                let finalClienteId = clienteId;
+
+                // Si está creando un cliente nuevo, crearlo primero
+                if (isCreatingCliente) {
+                    if (!newCliente.nombre || !newCliente.documento_identidad) {
+                        alert("El nombre y documento de identidad son obligatorios para el nuevo cliente.");
+                        setLoading(false);
+                        return;
+                    }
+                    const createdCliente = await clienteService.createCliente(newCliente);
+                    finalClienteId = createdCliente.id;
+                }
+
                 const payload = {
                     estado: estado,
-                    cliente_id: clienteId || null,
+                    cliente_id: finalClienteId || null,
                     asesor_id: asesorId || null
                 };
                 if (estado === 'reservado') {
@@ -130,17 +154,70 @@ export const ApartamentoEstadoModal: React.FC<ApartamentoEstadoModalProps> = ({ 
                     {estado !== 'disponible' && (
                         <div className="space-y-4 animate-fade-in">
                             <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-2 theme-light:text-slate-500">Cliente Interesado / Comprador</label>
-                                <select
-                                    value={clienteId}
-                                    onChange={(e) => setClienteId(e.target.value)}
-                                    className="w-full bg-dark-900 border border-white/10 text-white rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-saas-500 theme-light:bg-white theme-light:border-slate-300 theme-light:text-slate-900"
-                                >
-                                    <option value="">-- Seleccionar Cliente --</option>
-                                    {clientes.map(cliente => (
-                                        <option key={cliente.id} value={cliente.id}>{cliente.nombre} - {cliente.documento_identidad || 'Sin Doc'}</option>
-                                    ))}
-                                </select>
+                                <div className="flex justify-between items-center mb-2">
+                                    <label className="block text-sm font-medium text-gray-400 theme-light:text-slate-500">Cliente Interesado / Comprador</label>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setIsCreatingCliente(!isCreatingCliente)}
+                                        className="text-xs text-saas-500 hover:text-saas-400 font-medium transition-colors"
+                                    >
+                                        {isCreatingCliente ? 'Usar Existente' : '+ Nuevo Cliente'}
+                                    </button>
+                                </div>
+                                
+                                {isCreatingCliente ? (
+                                    <div className="space-y-3 bg-dark-900/50 p-4 rounded-xl border border-white/5 theme-light:bg-slate-50 theme-light:border-slate-100 mt-2">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="Cédula" 
+                                                    value={newCliente.documento_identidad}
+                                                    onChange={e => setNewCliente({...newCliente, documento_identidad: e.target.value})}
+                                                    className="w-full bg-dark-900 border border-white/10 text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-saas-500 text-sm theme-light:bg-white theme-light:border-slate-300 theme-light:text-slate-900" 
+                                                />
+                                            </div>
+                                            <div>
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="Teléfono" 
+                                                    value={newCliente.telefono}
+                                                    onChange={e => setNewCliente({...newCliente, telefono: e.target.value})}
+                                                    className="w-full bg-dark-900 border border-white/10 text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-saas-500 text-sm theme-light:bg-white theme-light:border-slate-300 theme-light:text-slate-900" 
+                                                />
+                                            </div>
+                                            <div className="col-span-2">
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="Nombre Completo" 
+                                                    value={newCliente.nombre}
+                                                    onChange={e => setNewCliente({...newCliente, nombre: e.target.value})}
+                                                    className="w-full bg-dark-900 border border-white/10 text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-saas-500 text-sm theme-light:bg-white theme-light:border-slate-300 theme-light:text-slate-900" 
+                                                />
+                                            </div>
+                                            <div className="col-span-2">
+                                                <input 
+                                                    type="email" 
+                                                    placeholder="Correo Electrónico" 
+                                                    value={newCliente.email}
+                                                    onChange={e => setNewCliente({...newCliente, email: e.target.value})}
+                                                    className="w-full bg-dark-900 border border-white/10 text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-saas-500 text-sm theme-light:bg-white theme-light:border-slate-300 theme-light:text-slate-900" 
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <select
+                                        value={clienteId}
+                                        onChange={(e) => setClienteId(e.target.value)}
+                                        className="w-full bg-dark-900 border border-white/10 text-white rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-saas-500 theme-light:bg-white theme-light:border-slate-300 theme-light:text-slate-900"
+                                    >
+                                        <option value="">-- Seleccionar Cliente --</option>
+                                        {clientes.map(cliente => (
+                                            <option key={cliente.id} value={cliente.id}>{cliente.nombre} - {cliente.documento_identidad || 'Sin Doc'}</option>
+                                        ))}
+                                    </select>
+                                )}
                             </div>
 
                             <div>
