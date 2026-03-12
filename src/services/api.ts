@@ -130,6 +130,10 @@ export const projectService = {
     duplicateTorre: async (projectId: string, torreId: string) => {
         const response = await api.post(`/proyectos/${projectId}/torres/${torreId}/duplicar`);
         return response.data;
+    },
+    getDisponibilidad: async (projectId: string) => {
+        const response = await api.get(`/proyectos/${projectId}/disponibilidad`);
+        return response.data;
     }
 };
 
@@ -164,6 +168,25 @@ export const rrhhService = {
     },
     deleteCargo: async (id: string) => {
         const response = await api.delete(`/rrhh/cargos/${id}`);
+        return response.data;
+    }
+};
+
+export const clienteService = {
+    getClientes: async () => {
+        const response = await api.get('/clientes');
+        return response.data;
+    },
+    createCliente: async (data: any) => {
+        const response = await api.post('/clientes', data);
+        return response.data;
+    },
+    updateCliente: async (id: string, data: any) => {
+        const response = await api.put(`/clientes/${id}`, data);
+        return response.data;
+    },
+    deleteCliente: async (id: string) => {
+        const response = await api.delete(`/clientes/${id}`);
         return response.data;
     }
 };

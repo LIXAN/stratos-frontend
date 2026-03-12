@@ -3,6 +3,8 @@ import { DashboardLayout } from '../templates/DashboardLayout';
 import { DashboardResumenView } from './DashboardResumenView';
 import { ProjectsView } from './ProjectsView';
 import { RRHHView } from './RRHHView';
+import { ClientesView } from './ClientesView';
+import { DisponibilidadView } from './DisponibilidadView';
 
 export const DashboardPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState('Resumen');
@@ -11,6 +13,10 @@ export const DashboardPage: React.FC = () => {
         switch (activeTab) {
             case 'Proyectos':
                 return <ProjectsView />;
+            case 'Disponibilidad':
+                return <DisponibilidadView />;
+            case 'Clientes':
+                return <ClientesView />;
             case 'Recursos Humanos':
                 return <RRHHView />;
             case 'Conexion WhatsApp':
