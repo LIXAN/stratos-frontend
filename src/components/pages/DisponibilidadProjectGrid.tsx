@@ -14,8 +14,9 @@ export const DisponibilidadProjectGrid: React.FC<GridProps> = ({ project, onBack
     const [loading, setLoading] = useState(true);
     const [expandedTorres, setExpandedTorres] = useState<Record<string, boolean>>({});
 
-    // Filtro de Disponibilidad
+    // Filtros
     const [filterEstado, setFilterEstado] = useState('Todos');
+    const [filterTorre, setFilterTorre] = useState('Todas');
 
     // Estado del Modal
     const [selectedApartamento, setSelectedApartamento] = useState<any>(null);
@@ -50,6 +51,11 @@ export const DisponibilidadProjectGrid: React.FC<GridProps> = ({ project, onBack
         { label: 'Vendido', value: 'vendido' }
     ];
 
+    const torreOptions = [
+        { label: 'Todas las torres', value: 'Todas' },
+        ...torres.map(t => ({ label: t.nombre, value: t.id.toString() }))
+    ];
+
     const getEstadoColor = (estado: string) => {
         switch (estado) {
             case 'disponible': return 'bg-green-500 hover:bg-green-400 theme-light:bg-green-500 theme-light:hover:bg-green-600';
@@ -82,18 +88,32 @@ export const DisponibilidadProjectGrid: React.FC<GridProps> = ({ project, onBack
 
             <div className="p-8 flex-1 overflow-y-auto w-full flex flex-col">
                 <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-dark-800/50 p-4 rounded-xl border border-white/5 theme-light:bg-white theme-light:border-slate-200 theme-light:shadow-sm">
-                    <div className="flex items-center space-x-4">
-                        <span className="text-gray-400 font-medium text-sm tracking-wider uppercase theme-light:text-slate-500">Filtro de Estado:</span>
-                        <FilterDropdown
-                            value={filterEstado}
-                            onChange={setFilterEstado}
-                            options={estadoOptions}
-                            icon={
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                                </svg>
-                            }
-                        />
+                    <div className="flex flex-wrap items-center gap-4">
+                        <div className="flex items-center space-x-2">
+                            <span className="text-gray-400 font-medium text-sm tracking-wider uppercase theme-light:text-slate-500">Filtrar por:</span>
+                            <FilterDropdown
+                                value={filterTorre}
+                                onChange={setFilterTorre}
+                                options={torreOptions}
+                                icon={
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                }
+                            />
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <FilterDropdown
+                                value={filterEstado}
+                                onChange={setFilterEstado}
+                                options={estadoOptions}
+                                icon={
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                    </svg>
+                                }
+                            />
+                        </div>
                     </div>
 
                     {/* Leyenda visual */}
@@ -114,12 +134,12 @@ export const DisponibilidadProjectGrid: React.FC<GridProps> = ({ project, onBack
                         <p className="text-gray-400 theme-light:text-slate-500">Este proyecto aún no tiene estructura creada.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start pb-12">
-                        {torres.map(torre => {
+                    <div className="space-y-6 pb-12 flex flex-col w-full">
+                        {torres.filter(t => filterTorre === 'Todas' || t.id.toString() === filterTorre).map(torre => {
                             const isExpanded = expandedTorres[torre.id] || false;
 
                             return (
-                                <div key={torre.id} className="glass-card rounded-2xl overflow-hidden theme-light:bg-white theme-light:border-slate-200 theme-light:shadow-md border border-white/5">
+                                <div key={torre.id} className="glass-card rounded-2xl overflow-hidden theme-light:bg-white theme-light:border-slate-200 theme-light:shadow-md border border-white/5 w-full block">
                                     <button
                                         onClick={() => setExpandedTorres(prev => ({ ...prev, [torre.id]: !isExpanded }))}
                                         className="w-full text-left p-6 flex justify-between items-center hover:bg-white/5 theme-light:hover:bg-slate-50 transition-colors"
@@ -138,7 +158,7 @@ export const DisponibilidadProjectGrid: React.FC<GridProps> = ({ project, onBack
                                     {isExpanded && (
                                         <div className="p-6 pt-0 border-t border-white/5 theme-light:border-slate-100 mt-2">
                                             {torre.pisos && torre.pisos.length > 0 ? (
-                                                <div className="flex flex-col-reverse gap-4">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     {[...torre.pisos].sort((a, b) => a.numero_nivel - b.numero_nivel).map(piso => {
                                                         const aptosFiltrados = (piso.apartamentos || []).filter((apto: any) => filterEstado === 'Todos' || apto.estado === filterEstado);
 
