@@ -25,7 +25,13 @@ export const DisponibilidadProjectGrid: React.FC<GridProps> = ({ project, onBack
         setLoading(true);
         try {
             const data = await projectService.getDisponibilidad(project.id);
-            setTorres(data);
+            // Sort towers naturally by extracting numbers from their names
+            const sortedTorres = data.sort((a: any, b: any) => {
+                const numA = parseInt(a.nombre.replace(/\D/g, '')) || 0;
+                const numB = parseInt(b.nombre.replace(/\D/g, '')) || 0;
+                return numA - numB;
+            });
+            setTorres(sortedTorres);
         } catch (error) {
             console.error("Error al cargar disponibilidad", error);
         } finally {
@@ -108,7 +114,7 @@ export const DisponibilidadProjectGrid: React.FC<GridProps> = ({ project, onBack
                         <p className="text-gray-400 theme-light:text-slate-500">Este proyecto aún no tiene estructura creada.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-12">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start pb-12">
                         {torres.map(torre => {
                             const isExpanded = expandedTorres[torre.id] || false;
 
